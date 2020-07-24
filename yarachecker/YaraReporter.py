@@ -28,7 +28,6 @@ class StatTracker:
         self.rule_errors = []
 
     def update(self, family, sample, is_covered, matches):
-        print("updating stats: ", family, sample, is_covered, matches)
         escaped_family = family.replace(".", "_")
         has_true_match = False
         self.num_samples_all += 1
@@ -36,7 +35,6 @@ class StatTracker:
             self.num_samples_covered += 1
         if matches:
             for rule in matches:
-                print("evaluating rule: ", rule)
                 if rule.startswith(escaped_family):
                     has_true_match = True
                 else:
@@ -44,10 +42,8 @@ class StatTracker:
                         self.false_positives[family][rule].append(sample)
                     else:
                         self.false_positives[family][rule] = [sample]
-                    print("updating FPs", self.false_positives)
             if has_true_match:
                 self.num_true_positives += 1
-            print("updating count", self.false_positives, len(self.false_positives))
             self.num_false_positives += len(self.false_positives)
         else:
             if is_covered:
@@ -84,11 +80,11 @@ class StatTracker:
         }
         if self.num_true_positives or self.num_false_positives:
             covered_precision = 1.0 * self.num_true_positives / (self.num_true_positives + self.num_false_positives)
-            covered_recall = 1.0 * self.num_true_positives / self.num_samples_covered
+            covered_recall = 1.0 * self.num_true_positives / self.num_samples_covered if self.num_samples_covered else 0
             all_precision = 1.0 * self.num_true_positives / (self.num_true_positives + self.num_false_positives)
-            all_recall = 1.0 * self.num_true_positives / self.num_samples_all
-            stats["F_Score_covered"] = 2.0 * (covered_precision * covered_recall) / (covered_precision + covered_recall)
-            stats["F_Score_all"] = 2.0 * (all_precision * all_recall) / (all_precision + all_recall)
+            all_recall = 1.0 * self.num_true_positives / self.num_samples_all  if self.num_samples_all else 0
+            stats["F_Score_covered"] = 2.0 * (covered_precision * covered_recall) / (covered_precision + covered_recall) if covered_precision + covered_recall else 0
+            stats["F_Score_all"] = 2.0 * (all_precision * all_recall) / (all_precision + all_recall)  if all_precision + all_recall else 0
         return stats
 
 class YaraReporter:
